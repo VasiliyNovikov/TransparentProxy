@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".root", ".root", "{4C966DA7
 		.editorconfig = .editorconfig
 		Directory.Packages.props = Directory.Packages.props
 		TransparentProxyDemo.props = TransparentProxyDemo.props
-		Scripts.txt = Scripts.txt
 		.gitignore = .gitignore
 		LICENSE = LICENSE
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxyDemo.Tests", "TransparentProxyDemo.Tests\TransparentProxyDemo.Tests.csproj", "{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}"
