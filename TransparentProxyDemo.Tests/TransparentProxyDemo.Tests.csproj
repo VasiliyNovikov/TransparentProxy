@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../TransparentProxyDemo.props" />
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TransparentProxyDemo.Certificates\TransparentProxyDemo.Certificates.csproj" />
+  </ItemGroup>
+</Project>

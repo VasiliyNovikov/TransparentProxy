@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxyDemo", "TransparentProxyDemo\TransparentProxyDemo.csproj", "{D2A0CCF4-568F-4E09-8711-A9DF98A03C9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxyDemo.Certificates", "TransparentProxyDemo.Certificates\TransparentProxyDemo.Certificates.csproj", "{FB64C9D8-04CE-4958-86DF-EC1C9C9DCE89}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".root", ".root", "{4C966DA7-8057-4054-817D-D875B827F7FE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		Directory.Packages.props = Directory.Packages.props
+		TransparentProxyDemo.props = TransparentProxyDemo.props
+		Scripts.txt = Scripts.txt
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxyDemo.Tests", "TransparentProxyDemo.Tests\TransparentProxyDemo.Tests.csproj", "{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxyDemo.CreateCA", "TransparentProxyDemo.CreateCA\TransparentProxyDemo.CreateCA.csproj", "{FFDACFF7-E801-4290-B36A-40969787EFED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2A0CCF4-568F-4E09-8711-A9DF98A03C9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2A0CCF4-568F-4E09-8711-A9DF98A03C9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2A0CCF4-568F-4E09-8711-A9DF98A03C9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2A0CCF4-568F-4E09-8711-A9DF98A03C9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB64C9D8-04CE-4958-86DF-EC1C9C9DCE89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB64C9D8-04CE-4958-86DF-EC1C9C9DCE89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB64C9D8-04CE-4958-86DF-EC1C9C9DCE89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB64C9D8-04CE-4958-86DF-EC1C9C9DCE89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3678AC6A-4CAC-45FF-B16A-AC2A4E8AD38F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFDACFF7-E801-4290-B36A-40969787EFED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFDACFF7-E801-4290-B36A-40969787EFED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFDACFF7-E801-4290-B36A-40969787EFED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFDACFF7-E801-4290-B36A-40969787EFED}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
