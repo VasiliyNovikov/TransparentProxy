@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -11,8 +10,9 @@ public static class CertificateExtensions
                                                  | X509KeyStorageFlags.PersistKeySet
                                                  | X509KeyStorageFlags.Exportable;
     private const int DefaultKeySize = 2048;
-    private const int DefaultRootCaValidityYears = 10;
-    private const int DefaultDomainCertValidityYears = 2;
+    private const int DefaultRootCaValidityDays = 1000;
+    private const int DefaultDomainCertValidityDays = 30;
+    private const int ValidityMarginSeconds = 1;
     private static readonly HashAlgorithmName DefaultHashAlgorithm = HashAlgorithmName.SHA256;
     private static readonly RSASignaturePadding DefaultSignaturePadding = RSASignaturePadding.Pss;
 
@@ -22,7 +22,12 @@ public static class CertificateExtensions
 
     public static X509Certificate2 DeepClone(this X509Certificate2 cert) => FromPfxBytes(cert.ToPfxBytes());
 
-    public static X509Certificate2 CreateRootCA(string subjectName, int keySize = DefaultKeySize, int validityYears = DefaultRootCaValidityYears)
+    public static X509Certificate2 CreateRootCA(string subjectName, int validityDays = DefaultRootCaValidityDays, int keySize = DefaultKeySize)
+    {
+        return CreateRootCA(subjectName, TimeSpan.FromDays(validityDays), keySize);
+    }
+
+    public static X509Certificate2 CreateRootCA(string subjectName, TimeSpan validity, int keySize = DefaultKeySize)
     {
         using var rsa = RSA.Create(keySize);
         var request = new CertificateRequest($"CN={subjectName}", rsa, DefaultHashAlgorithm, DefaultSignaturePadding);
@@ -36,14 +41,18 @@ public static class CertificateExtensions
         // Subject Key Identifier
         request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, X509SubjectKeyIdentifierHashAlgorithm.Sha1, critical: false));
 
-        var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
-        var notAfter  = notBefore.AddYears(validityYears);
+        var (notBefore, notAfter) = GetValidityDates(validity);
         using var rootCa = request.CreateSelfSigned(notBefore, notAfter);
 
         return rootCa.DeepClone();
     }
 
-    public static X509Certificate2 GenerateDomainCertificate(this X509Certificate2 rootCa, string domainName, int validityYears = DefaultDomainCertValidityYears, int keySize = DefaultKeySize)
+    public static X509Certificate2 GenerateDomainCertificate(this X509Certificate2 rootCa, string domainName, int validityDays = DefaultDomainCertValidityDays, int keySize = DefaultKeySize)
+    {
+        return GenerateDomainCertificate(rootCa, domainName, TimeSpan.FromDays(validityDays), keySize);
+    }
+
+    public static X509Certificate2 GenerateDomainCertificate(this X509Certificate2 rootCa, string domainName, TimeSpan validity, int keySize = DefaultKeySize)
     {
         using var rsa = RSA.Create(keySize);
 
@@ -58,14 +67,20 @@ public static class CertificateExtensions
 
         request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature, critical: false));
 
-        var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
-        var notAfter  = notBefore.AddYears(validityYears);
-
+        var (notBefore, notAfter) = GetValidityDates(validity);
         var serialNumber = Guid.NewGuid().ToByteArray();
 
         using var issuedCertWithoutKey = request.Create(issuerCertificate: rootCa, notBefore: notBefore, notAfter: notAfter, serialNumber: serialNumber);
         using var finalCert = issuedCertWithoutKey.CopyWithPrivateKey(rsa);
 
         return finalCert.DeepClone();
+    }
+    
+    private static (DateTimeOffset NotBefore, DateTimeOffset NotAfter) GetValidityDates(TimeSpan validity)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var notBefore = now.AddSeconds(-ValidityMarginSeconds);
+        var notAfter  = now + validity;
+        return (notBefore, notAfter);
     }
 }
