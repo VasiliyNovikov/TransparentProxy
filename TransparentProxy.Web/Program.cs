@@ -23,6 +23,6 @@ var app = builder.Build();
 
 app.MapGet("api/hello", () => "Hello from Transparent Proxy!").RequireHost("localhost");
 
-app.MapFallback(async context => await context.RequestServices.GetRequiredService<HttpForwarder>().Forward(context));
+app.MapFallback("{*path}", async context => await context.RequestServices.GetRequiredService<HttpForwarder>().Forward(context));
 
 app.Run();
