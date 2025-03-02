@@ -7,6 +7,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -30,8 +31,19 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
 
     public async Task Forward(HttpContext context)
     {
-        var cancellationToken = context.RequestAborted;
-        
+        try
+        {
+            await Forward(context, context.RequestAborted);
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Forwarding request was canceled");
+            throw;
+        }
+    }
+
+    private async Task Forward(HttpContext context, CancellationToken cancellationToken)
+    {
         var scheme = context.Request.Scheme;
         var protocol = context.Request.Protocol;
         var method = context.Request.Method;
