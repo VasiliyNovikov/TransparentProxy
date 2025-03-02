@@ -28,7 +28,7 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
 
     private readonly ConcurrentDictionary<string, HttpClient> _clients = new(StringComparer.OrdinalIgnoreCase);
 
-    public virtual string GetForwardedHost(string host) => host;
+    protected virtual string GetForwardedHost(string host) => host;
 
     public async Task Forward(HttpContext context)
     {
@@ -37,9 +37,10 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
         var scheme = context.Request.Scheme;
         var protocol = context.Request.Protocol;
         var method = context.Request.Method;
-        var host = GetForwardedHost(context.Request.Host.Host);
+        var originalHost = context.Request.Host.Host;
+        var forwardedHost = GetForwardedHost(originalHost);
         var port = context.Request.Host.Port;
-        var baseAddress = $"{scheme}://{host}{(port.HasValue ? $":{port}" : "")}";
+        var baseAddress = $"{scheme}://{forwardedHost}{(port.HasValue ? $":{port}" : "")}";
         var path = context.Request.Path;
         var query = context.Request.QueryString;
         var pathAndQuery = $"{path}{query}";
@@ -57,7 +58,7 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
         logger.LogInformation(requestMessageBuilder.ToString());
 
         var client = GetClient(baseAddress);
-
+        
         var requestMessage = new HttpRequestMessage
         {
             Method = new HttpMethod(method),
@@ -88,7 +89,12 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
         context.Response.StatusCode = statusCode;
         foreach (var (name, value) in response.Headers)
             if (!ExcludedResponseHeaders.Contains(name))
-                context.Response.Headers[name] = new([.. value]);
+            {
+                string[] valueCopy = [.. value];
+                if (name == "Location")
+                    valueCopy = [valueCopy[0].Replace(forwardedHost, originalHost)];
+                context.Response.Headers[name] = new(valueCopy);
+            }
 
         context.Response.ContentType = contentType;
         context.Response.ContentLength = contentLength;
@@ -101,5 +107,9 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
 
     private HttpClient GetClient(string baseAddress) => _clients.GetOrAdd(baseAddress, CreateClient);
 
-    private static HttpClient CreateClient(string baseAddress) => new() { BaseAddress = new Uri(baseAddress) };
+    private static HttpClient CreateClient(string baseAddress)
+    {
+        var handler = new SocketsHttpHandler { AllowAutoRedirect = false };
+        return new HttpClient(handler) { BaseAddress = new Uri(baseAddress) };
+    }
 }

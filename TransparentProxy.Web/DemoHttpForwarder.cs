@@ -6,5 +6,5 @@ namespace TransparentProxy.Web;
 
 public class DemoHttpForwarder(ILogger<DemoHttpForwarder> logger) : HttpForwarder(logger)
 {
-    public override string GetForwardedHost(string host) => host.EndsWith(".proxy", StringComparison.OrdinalIgnoreCase) ? host[..^6] : "unknown.com";
+    protected override string GetForwardedHost(string host) => host.EndsWith(".proxy", StringComparison.OrdinalIgnoreCase) ? host[..^6] : "unknown.com";
 }
