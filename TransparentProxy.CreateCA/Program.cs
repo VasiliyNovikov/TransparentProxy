@@ -1,7 +1,7 @@
 ﻿using System.CommandLine;
 using System.IO;
 using System.Threading.Tasks;
-using TransparentProxyDemo.Certificates;
+using TransparentProxy.Certificates;
 
 var nameOption = new Option<string>(["-s", "--subject"], description: "Root CA Subject name") { IsRequired = true };
 var fileOption = new Option<FileInfo>(["-o", "--output"], description: "Root CA output file name/path") { IsRequired = true };

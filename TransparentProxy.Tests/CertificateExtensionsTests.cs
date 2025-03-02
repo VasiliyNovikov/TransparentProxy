@@ -1,8 +1,8 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TransparentProxyDemo.Certificates;
+using TransparentProxy.Certificates;
 
-namespace TransparentProxyDemo.Tests;
+namespace TransparentProxy.Tests;
 
 [TestClass]
 public class CertificateExtensionsTests

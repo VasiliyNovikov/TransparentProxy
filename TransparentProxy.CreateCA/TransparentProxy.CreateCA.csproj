@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../TransparentProxyDemo.props" />
+  <Import Project="../TransparentProxy.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -7,6 +7,6 @@
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TransparentProxyDemo.Certificates\TransparentProxyDemo.Certificates.csproj" />
+    <ProjectReference Include="..\TransparentProxy.Certificates\TransparentProxy.Certificates.csproj" />
   </ItemGroup>
 </Project>

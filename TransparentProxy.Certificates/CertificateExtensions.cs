@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
-namespace TransparentProxyDemo.Certificates;
+namespace TransparentProxy.Certificates;
 
 public static class CertificateExtensions
 {

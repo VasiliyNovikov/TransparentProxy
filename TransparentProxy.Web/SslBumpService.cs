@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.DependencyInjection;
-using TransparentProxyDemo.Certificates;
+using TransparentProxy.Certificates;
 
-namespace TransparentProxyDemo;
+namespace TransparentProxy.Web;
 
 internal sealed class SslBumpService(string rootCaPath, string defaultDomainName, TimeSpan domainCertLifetime) : IHttpsCertificateSelector
 {
