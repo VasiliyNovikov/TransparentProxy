@@ -1,17 +1,22 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Concurrent;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.Http;
 
-namespace TransparentProxy.Proxy;
+namespace TransparentProxy.Forwarder;
 
-public static class HttpProxyService
+public class HttpForwarder
 {
+    private readonly ConcurrentDictionary<string, HttpClient> _clients = new(StringComparer.OrdinalIgnoreCase);
+
     public static async Task Invoke(HttpContext context)
     {
         var protocol = context.Request.Protocol;
         var method = context.Request.Method;
+        var host = context.Request.Host.Host;
         var path = context.Request.Path;
         var query = context.Request.QueryString;
     
@@ -29,8 +34,17 @@ public static class HttpProxyService
         context.Response.Headers["X-Custom-Header"] = "MyCustomValue";
         context.Response.ContentType = "text/plain";
 
-        var responseBody = $"Protocol: {protocol}\nMethod: {method}\nPath: {path}\nQuery: {query}\nHeaders:\n{headerInfo}\nBody:\n  {requestBody}";
+        var responseBody = $"Protocol: {protocol}\nMethod: {method}\nHost: {host}\nPath: {path}\nQuery: {query}\nHeaders:\n{headerInfo}\nBody:\n  {requestBody}";
 
         await context.Response.WriteAsync(responseBody);
     }
+    
+    public Task Forward(HttpContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    private HttpClient GetClient(string baseAddress) => _clients.GetOrAdd(baseAddress, CreateClient);
+
+    private static HttpClient CreateClient(string baseAddress) => new() { BaseAddress = new Uri(baseAddress) };
 }

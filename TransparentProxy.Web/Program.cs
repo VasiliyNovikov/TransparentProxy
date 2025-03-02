@@ -2,7 +2,7 @@ using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using TransparentProxy.Proxy;
+using TransparentProxy.Forwarder;
 using TransparentProxy.Web;
 
 var certPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "../../../../TransparentProxy.pfx"));
@@ -21,6 +21,6 @@ var app = builder.Build();
 
 app.MapGet("api/hello", () => "Hello from Transparent Proxy!").RequireHost("localhost");
 
-app.MapFallback(HttpProxyService.Invoke);
+app.MapFallback(HttpForwarder.Invoke);
 
 app.Run();

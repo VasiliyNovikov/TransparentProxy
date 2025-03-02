@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxy.Tests", "T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxy.CreateCA", "TransparentProxy.CreateCA\TransparentProxy.CreateCA.csproj", "{FFDACFF7-E801-4290-B36A-40969787EFED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxy.Proxy", "TransparentProxy.Proxy\TransparentProxy.Proxy.csproj", "{3E04CB5D-0A8F-4338-B48C-28B5CE02B966}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransparentProxy.Forwarder", "TransparentProxy.Forwarder\TransparentProxy.Forwarder.csproj", "{3E04CB5D-0A8F-4338-B48C-28B5CE02B966}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
