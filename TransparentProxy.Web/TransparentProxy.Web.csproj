@@ -7,4 +7,7 @@
     <ProjectReference Include="..\TransparentProxy.Forwarder\TransparentProxy.Forwarder.csproj" />
     <ProjectReference Include="..\TransparentProxy.Certificates\TransparentProxy.Certificates.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DnsClient" />
+  </ItemGroup>
 </Project>
