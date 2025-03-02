@@ -16,24 +16,36 @@ namespace TransparentProxy.Forwarder;
 
 public class HttpForwarder(ILogger<HttpForwarder> logger)
 {
-    private static readonly FrozenSet<string> ExcludedRequestHeaders = new[]
-    {
-        "Host",
-        "Accept-Encoding"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-    private static readonly FrozenSet<string> ExcludedResponseHeaders = new[]
-    {
-        "Transfer-Encoding",
-        "Connection"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+    private static readonly FrozenSet<string> ExcludedRequestHeaders = new[] { "Host", "Accept-Encoding" }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+    private static readonly FrozenSet<string> ExcludedResponseHeaders = new[] { "Transfer-Encoding", "Connection" }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     private readonly ConcurrentDictionary<string, HttpClient> _clients = new(StringComparer.OrdinalIgnoreCase);
 
+    protected virtual void ConfigureSocketsHandler(SocketsHttpHandler handler) { }
+
+    protected virtual async Task<HttpResponseMessage> Forward(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
+    {
+        var baseAddress = requestMessage.RequestUri!.GetLeftPart(UriPartial.Authority);
+        var client = GetClient(baseAddress);
+        return await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    }
+
     public async Task Forward(HttpContext context)
     {
+        var cancellationToken = context.RequestAborted;
         try
         {
-            await Forward(context, context.RequestAborted);
+            var requestMessage = CreateRequest(context);
+
+            LogRequest(requestMessage);
+
+            var response = await Forward(requestMessage, cancellationToken);
+
+            LogResponse(response);
+
+            await WriteResponse(context, response, cancellationToken);
+
+            logger.LogInformation("Forwarding completed");
         }
         catch (OperationCanceledException)
         {
@@ -42,60 +54,34 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
         }
     }
 
-    private async Task Forward(HttpContext context, CancellationToken cancellationToken)
+    private static HttpRequestMessage CreateRequest(HttpContext context)
     {
         var scheme = context.Request.Scheme;
-        var protocol = context.Request.Protocol;
-        var method = context.Request.Method;
         var host = context.Request.Host.Host;
         var port = context.Request.Host.Port;
-        var baseAddress = $"{scheme}://{host}{(port.HasValue ? $":{port}" : "")}";
         var path = context.Request.Path;
         var query = context.Request.QueryString;
-        var pathAndQuery = $"{path}{query}";
-        var requestHeaders = context.Request.Headers;
+        var url = $"{scheme}://{host}{(port.HasValue ? $":{port}" : "")}{path}{query}";
 
-        StringBuilder requestMessageBuilder = new();
-        requestMessageBuilder.AppendLine("Forwarding request:");
-        requestMessageBuilder.AppendLine($"  RequestProtocol: {protocol}");
-        requestMessageBuilder.AppendLine($"  Base Address: {baseAddress}");
-        requestMessageBuilder.AppendLine($"  Method: {method}");
-        requestMessageBuilder.AppendLine($"  Path: {pathAndQuery}");
-        requestMessageBuilder.AppendLine("  Headers:");
-        foreach (var (name, value) in requestHeaders)
-            requestMessageBuilder.AppendLine($"    {name}: {string.Join(", ", (IEnumerable<string?>)value)}");
-        logger.LogInformation(requestMessageBuilder.ToString());
-
-        var client = GetClient(baseAddress);
-        
         var requestMessage = new HttpRequestMessage
         {
-            Method = new HttpMethod(method),
-            RequestUri = new Uri(pathAndQuery, UriKind.Relative),
+            Method = new HttpMethod(context.Request.Method),
+            RequestUri = new Uri(url),
             Content = new StreamContent(context.Request.Body)
         };
-        
-        foreach (var (name, value) in requestHeaders)
+        foreach (var (name, value) in context.Request.Headers)
             if (!ExcludedRequestHeaders.Contains(name))
                 requestMessage.Headers.TryAddWithoutValidation(name, (IEnumerable<string?>)value);
         
-        var response = await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        
-        var statusCode = (int)response.StatusCode;
+        return requestMessage;
+    }
+
+    private static async Task WriteResponse(HttpContext context, HttpResponseMessage response, CancellationToken cancellationToken)
+    {
         var contentType = response.Content.Headers.ContentType?.ToString();
         var contentLength = response.Content.Headers.ContentLength;
-        
-        StringBuilder responseMessageBuilder = new();
-        responseMessageBuilder.AppendLine("Forwarding response:");
-        responseMessageBuilder.AppendLine($"  StatusCode: {statusCode}");
-        responseMessageBuilder.AppendLine($"  ContentType: {contentType}");
-        responseMessageBuilder.AppendLine($"  ContentLength: {contentLength}");
-        responseMessageBuilder.AppendLine("  Headers:");
-        foreach (var (name, value) in response.Headers)
-            responseMessageBuilder.AppendLine($"    {name}: {string.Join(", ", value)}");
-        logger.LogInformation(responseMessageBuilder.ToString());
 
-        context.Response.StatusCode = statusCode;
+        context.Response.StatusCode = (int)response.StatusCode;
         foreach (var (name, value) in response.Headers)
             if (!ExcludedResponseHeaders.Contains(name))
                 context.Response.Headers[name] = new([.. value]);
@@ -105,8 +91,6 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
 
         await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
         await responseStream.CopyToAsync(context.Response.Body, cancellationToken);
-
-        logger.LogInformation("Forwarding completed");
     }
 
     private HttpClient GetClient(string baseAddress) => _clients.GetOrAdd(baseAddress, CreateClient);
@@ -118,5 +102,35 @@ public class HttpForwarder(ILogger<HttpForwarder> logger)
         return new HttpClient(handler) { BaseAddress = new Uri(baseAddress) };
     }
 
-    protected virtual void ConfigureSocketsHandler(SocketsHttpHandler handler) { }
+    private void LogRequest(HttpRequestMessage requestMessage)
+    {
+        StringBuilder requestMessageBuilder = new();
+        requestMessageBuilder.AppendLine("Forwarding request:");
+        requestMessageBuilder.AppendLine($"  Method: {requestMessage.Method}");
+        requestMessageBuilder.AppendLine($"  Url: {requestMessage.RequestUri}");
+        requestMessageBuilder.AppendLine("  Headers:");
+        foreach (var (name, value) in requestMessage.Headers)
+            requestMessageBuilder.AppendLine($"    {name}: {string.Join(", ", value)}");
+        logger.LogInformation(requestMessageBuilder.ToString());
+    }
+
+    private void LogResponse(HttpResponseMessage response)
+    {
+        StringBuilder responseMessageBuilder = new();
+        responseMessageBuilder.AppendLine("Forwarding response:");
+        responseMessageBuilder.AppendLine($"  StatusCode: {(int)response.StatusCode}");
+        responseMessageBuilder.AppendLine($"  ContentType: {response.Content.Headers.ContentType}");
+        responseMessageBuilder.AppendLine($"  ContentLength: {response.Content.Headers.ContentLength}");
+        responseMessageBuilder.AppendLine("  Headers:");
+        foreach (var (name, value) in response.Headers)
+            responseMessageBuilder.AppendLine($"    {name}: {string.Join(", ", value)}");
+
+        var contentType = response.Content.Headers.ContentType?.ToString();
+        if (contentType is not null)
+            responseMessageBuilder.AppendLine($"    Content-Type: {contentType}");
+        var contentLength = response.Content.Headers.ContentLength;
+        if (contentLength is not null)
+            responseMessageBuilder.AppendLine($"    Content-Length: {contentLength}");
+        logger.LogInformation(responseMessageBuilder.ToString());
+    }
 }
